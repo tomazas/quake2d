@@ -109,6 +109,7 @@ public class EditorView extends FrameView {
     final int snapThreshold = 8;  // in pixels
     final int pickupSize = 12; // health/ammo/etc. rectangle
     final float minEraseDist = 10; // in pixels
+    private String savePath;
 
     public EditorView(SingleFrameApplication app) {
         super(app);
@@ -842,13 +843,21 @@ public class EditorView extends FrameView {
     //  Save map
     //
     private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
-        System.out.println("Saving to file 'myMap.map'");
         try {
-            if ( !b_node_is )  { /* checking node */
-                ShowMessage("Wrong or non existing node");
+            if ( !b_node_is )  { /* ensure map seed node is placed */
+                ShowMessage("Please place map navigation node before saving!");
             }  else  {
+                if (savePath == null) {
+                    JFileChooser fileChooser = new JFileChooser();
+                    if (fileChooser.showSaveDialog(this.m_mainWindow) != JFileChooser.APPROVE_OPTION) {
+                        return;
+                    }
+                    File file = fileChooser.getSelectedFile();
+                    savePath = file.getAbsolutePath();
+                }
 
-                RandomAccessFile raf = new RandomAccessFile( new File("myMap.map"), "rw");
+                System.out.println("Saving to file: " + savePath);
+                RandomAccessFile raf = new RandomAccessFile(savePath, "rw");
 
                 raf.writeInt(0xC0FFEE); // write magic
                 raf.writeInt(editorVersion);
@@ -883,25 +892,27 @@ public class EditorView extends FrameView {
                 }
 
                 raf.close();
-                ShowMessage("Map saved to file 'myMap.map'");
+                ShowMessage("Map saved to file: " + savePath);
             }
 
-        } catch ( FileNotFoundException e ) {
-            ShowMessage("File not found ShowMessage.");
+        } catch( Exception e) {
+            ShowMessage("Unable to save map: " + e.getMessage());
+            e.printStackTrace();
         }
-        catch ( IOException e ) {
-            ShowMessage("File I/O ShowMessage.");
-        }
-        catch( Exception e){
-            ShowMessage("Unknown ShowMessage when saving map.");
-        }
-
     }//GEN-LAST:event_jMenuItem2ActionPerformed
 
     private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
-        System.out.println("Opening file 'myMap.map'");
         try {
-            RandomAccessFile raf = new RandomAccessFile("myMap.map", "rw");
+            JFileChooser fileChooser = new JFileChooser();
+            if (fileChooser.showOpenDialog(this.m_mainWindow) != JFileChooser.APPROVE_OPTION) {
+                return;
+            }
+            
+            File file = fileChooser.getSelectedFile();
+            String openPath = file.getAbsolutePath();
+            System.out.println("Opening file: " + openPath);
+
+            RandomAccessFile raf = new RandomAccessFile(openPath, "rw");
 
             int magic = raf.readInt();
             int ver = raf.readInt();
@@ -944,14 +955,9 @@ public class EditorView extends FrameView {
             }
             
             raf.close();
-        } catch ( FileNotFoundException e ) {
-            ShowMessage("File not found ShowMessage.");
-        }
-        catch ( IOException e ) {
-            ShowMessage("File I/O exception.");
-        }
-        catch( Exception e){
-            ShowMessage("Unknown ShowMessage when saving map.");
+        } catch (Exception e) {
+            ShowMessage("Unable to open file: " + e.getMessage());
+            e.printStackTrace();
         }
     }//GEN-LAST:event_jMenuItem1ActionPerformed
 
